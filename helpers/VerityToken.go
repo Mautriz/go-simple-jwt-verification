@@ -2,7 +2,6 @@ package helpers
 
 import (
 	"fmt"
-	"errors"
 	"bp-auth-interceptor/env"
 	"github.com/dgrijalva/jwt-go"
 )
@@ -13,7 +12,15 @@ func  VerifyToken(token string) (bool, error) {
 		_, ok := parsed.Method.(*jwt.SigningMethodHMAC);
 
 		if !ok {
-			return nil, errors.Unwrap(fmt.Errorf("Verifica jwt fallita"))
+			return nil, fmt.Errorf("Signing method non accettato")
+		}
+
+		mapClaims := parsed.Claims.(jwt.MapClaims)
+		exp := int64(mapClaims["exp"].(float64))
+		isExpired := CurrTimestampSecond() > exp
+
+		if isExpired {
+			return nil, fmt.Errorf("Il token è expired")
 		}
 
 		return env.JwtSecret, nil
